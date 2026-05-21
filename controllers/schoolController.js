@@ -32,39 +32,38 @@ export const addSchool = (req, res) => {
 };
 
 
+export const listSchools = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.query;
 
-export const listSchools = (req, res) => {
-  const { latitude, longitude } = req.query;
+    const [schools] = await db.query("SELECT * FROM schools");
 
-  if (!latitude || !longitude) {
-    return res.status(400).json({
-      message: "Latitude and longitude required",
+    const sortedSchools = schools
+      .map((school) => {
+        const distance = calculateDistance(
+          parseFloat(latitude),
+          parseFloat(longitude),
+          school.latitude,
+          school.longitude
+        );
+
+        return {
+          ...school,
+          distance: Number(distance.toFixed(2)),
+        };
+      })
+      .sort((a, b) => a.distance - b.distance);
+
+    res.status(200).json({
+      success: true,
+      schools: sortedSchools,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
-
-  db.query("SELECT * FROM schools", (err, result) => {
-    if (err) {
-      return res.status(500).json({
-        message: "Database error",
-      });
-    }
-
-    const schools = result.map((school) => {
-      const distance = calculateDistance(
-        parseFloat(latitude),
-        parseFloat(longitude),
-        school.latitude,
-        school.longitude
-      );
-
-      return {
-        ...school,
-        distance: distance.toFixed(2),
-      };
-    });
-
-    schools.sort((a, b) => a.distance - b.distance);
-
-    res.status(200).json(schools);
-  });
 };
