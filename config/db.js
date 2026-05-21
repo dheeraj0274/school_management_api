@@ -1,26 +1,24 @@
 import mysql from "mysql2";
-import dotenv from 'dotenv'
+import dotenv from "dotenv";
 
-dotenv.config({path:'./config/.env'})
+dotenv.config({path:'./config/.env'});
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port:process.env.DB_PORT
+  port: process.env.DB_PORT,
 });
 
-console.log(process.env.DB_HOST)
-
-
-
-connection.connect((err) => {
+pool.getConnection((err, connection) => {
   if (err) {
     console.log("Database connection failed");
+    console.log(err);
   } else {
     console.log("MySQL Connected");
+    connection.release();
   }
 });
 
-export default connection;
+export default pool.promise();
